@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Olist E-Commerce Revenue Segmentation & Regional Logistics Dashboard</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    :root {
+      --bg: #0b0f19;
+      --card-bg: rgba(17, 24, 39, 0.85);
+      --border-color: rgba(255, 255, 255, 0.1);
+      --accent: #f59e0b;
+      --ontime: #10b981;
+      --delayed: #ef4444;
+    }
+    body {
+      background-color: var(--bg);
+      color: #f8fafc;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+    .custom-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 14px;
+      backdrop-filter: blur(16px);
+    }
+    .state-node {
+      transition: all 0.25s ease;
+      cursor: pointer;
+    }
+    .state-node:hover {
+      filter: brightness(1.35);
+      stroke: #ffffff;
+      stroke-width: 2.5px;
+    }
+    .active-state {
+      stroke: #fbbf24 !important;
+      stroke-width: 3.5px !important;
+      filter: drop-shadow(0 0 8px rgba(245, 158, 11, 0.8));
+    }
+    .bar-anim {
+      transition: width 0.4s ease, height 0.4s ease;
+    }
+    input[type=range] {
+      accent-color: var(--accent);
+    }
+  </style>
+</head>
+<body class="p-3 md:p-6 antialiased">
+
+  <div class="max-w-7xl mx-auto space-y-6">
+
+    <!-- Top Header & Filter Bar -->
+    <div class="custom-card p-5">
+      <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-gray-800">
+        <div>
+          <div class="flex items-center space-x-3">
+            <span class="p-2.5 rounded-xl bg-gradient-to-br from-amber-500 to-amber-600 text-gray-950 font-black text-xl shadow-lg shadow-amber-500/20">
+              <i class="fa-solid fa-boxes-packing"></i>
+            </span>
+            <div>
+              <h1 class="text-xl md:text-2xl font-black text-white tracking-tight">
+                Olist E-Commerce Revenue Segmentation & Regional Logistics Dashboard
+              </h1>
+              <p class="text-xs text-gray-400 mt-0.5">
+                Executive Analytics Dashboard · 116,967 Verified Delivered Orders · 94,200 Unique Customers
+              </p>
+            </div>
+          </div>
+        </div>
+        <div class="flex flex-wrap items-center gap-2">
+          <span class="text-xs px-2.5 py-1 rounded-full font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/30">
+            <i class="fa-brands fa-python mr-1"></i> Python · SQL · Tableau
+          </span>
+          <button id="resetFiltersBtn" class="text-xs px-3 py-1.5 rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-200 border border-gray-700 transition flex items-center">
+            <i class="fa-solid fa-rotate-left mr-1.5"></i> Reset Filters
+          </button>
+        </div>
+      </div>
+
+      <!-- Filters Ribbon -->
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-4">
+        <div>
+          <label class="text-[11px] font-bold text-gray-400 uppercase tracking-wider block mb-1">Macro-Region</label>
+          <select id="regionFilter" class="w-full text-xs bg-gray-900 border border-gray-700 rounded-lg p-2 text-gray-200 focus:outline-none focus:border-amber-500">
+            <option value="ALL">All Regions (Brazil National)</option>
+            <option value="Southeast">Southeast (SP, RJ, MG, ES)</option>
+            <option value="South">South (RS, PR, SC)</option>
+            <option value="Northeast">Northeast (BA, PE, CE, etc.)</option>
+            <option value="Central-West">Central-West (DF, GO, MT, MS)</option>
+            <option value="North">North (AM, PA, RO, etc.)</option>
+          </select>
+        </div>
+        <div>
+          <label class="text-[11px] font-bold text-gray-400 uppercase tracking-wider block mb-1">Customer Tier</label>
+          <select id="tierFilter" class="w-full text-xs bg-gray-900 border border-gray-700 rounded-lg p-2 text-gray-200 focus:outline-none focus:border-amber-500">
+            <option value="ALL">All Tiers (Full Cohort)</option>
+            <option value="Top Tier (VIP)">Top Tier (VIP / High Spend - 72.4% GMV)</option>
+            <option value="Mid Tier (Core)">Mid Tier (Core / Repeat Buyers)</option>
+            <option value="Low Tier (Standard)">Low Tier (Standard / Budget)</option>
+          </select>
+        </div>
+        <div>
+          <label class="text-[11px] font-bold text-gray-400 uppercase tracking-wider block mb-1">Fulfillment Experience</label>
+          <select id="delayFilter" class="w-full text-xs bg-gray-900 border border-gray-700 rounded-lg p-2 text-gray-200 focus:outline-none focus:border-amber-500">
+            <option value="ALL">All Delivery Outcomes</option>
+            <option value="ONTIME">On-Time Deliveries Only (<= 0d)</option>
+            <option value="DELAYED">Delayed Deliveries Only (> 0d)</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- KPI Scorecards -->
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div class="custom-card p-4">
+        <span class="text-[11px] font-bold uppercase tracking-wider text-gray-400 block">Gross Revenue (GMV)</span>
+        <div id="kpiGMV" class="text-2xl md:text-3xl font-black text-white mt-1">R$ 46.9M</div>
+        <div id="kpiGMVSub" class="text-[11px] text-gray-400 mt-1 flex items-center space-x-1">
+          <span class="text-emerald-400 font-semibold">100.0%</span> <span>of national GMV</span>
+        </div>
+      </div>
+
+      <div class="custom-card p-4">
+        <span class="text-[11px] font-bold uppercase tracking-wider text-gray-400 block">Delivered Orders</span>
+        <div id="kpiOrders" class="text-2xl md:text-3xl font-black text-white mt-1">116,967</div>
+        <div id="kpiOrdersSub" class="text-[11px] text-gray-400 mt-1">
+          Across <span id="kpiStatesCount" class="text-amber-400 font-semibold">27</span> Federative States
+        </div>
+      </div>
+
+      <div class="custom-card p-4">
+        <span class="text-[11px] font-bold uppercase tracking-wider text-amber-300 block">Top Tier Revenue Share</span>
+        <div id="kpiTopShare" class="text-2xl md:text-3xl font-black text-amber-400 mt-1">72.4%</div>
+        <div class="text-[11px] text-gray-400 mt-1">
+          <span class="text-amber-400 font-semibold">Pareto Concentration:</span> Top spenders
+        </div>
+      </div>
+
+      <div class="custom-card p-4 border-rose-500/30">
+        <span class="text-[11px] font-bold uppercase tracking-wider text-rose-300 block">VIP Delay Churn Multiplier</span>
+        <div id="kpiMultiplier" class="text-2xl md:text-3xl font-black text-rose-400 mt-1">2.38x</div>
+        <div class="text-[11px] text-gray-400 mt-1">
+          <span class="text-rose-400 font-semibold">12.4% -> 28.1%+</span> churn surge
+        </div>
+      </div>
+    </div>
+
+    <!-- Center Section: Interactive Regional Brazil Map + RFM Treemap -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+      <!-- Interactive SVG Brazil Map (7 cols) -->
+      <div class="lg:col-span-7 custom-card p-5 flex flex-col justify-between">
+        <div>
+          <div class="flex items-center justify-between mb-2">
+            <div>
+              <h2 class="text-base font-bold text-white flex items-center">
+                <i class="fa-solid fa-map-location-dot text-amber-400 mr-2"></i> Brazil Regional Logistics & Revenue Map
+              </h2>
+              <p class="text-[11px] text-gray-400">Click any state bubble to filter the entire dashboard</p>
+            </div>
+            <div id="selectedStateBadge" class="text-xs px-2.5 py-1 rounded bg-gray-800 text-gray-300 font-semibold">
+              National View
+            </div>
+          </div>
+
+          <!-- SVG Geographic Projection Container -->
+          <div class="relative bg-gray-950/70 rounded-xl p-3 border border-gray-800/80 mt-2">
+            <svg id="brazilSvg" viewBox="0 0 620 460" class="w-full h-[320px]">
+              <defs>
+                <radialGradient id="mapGlow" cx="50%" cy="50%" r="50%">
+                  <stop offset="0%" stop-color="#1e293b" stop-opacity="0.8"/>
+                  <stop offset="100%" stop-color="#0b0f19" stop-opacity="0.2"/>
+                </radialGradient>
+              </defs>
+              <rect width="620" height="460" fill="url(#mapGlow)" rx="10"/>
+
+              <!-- Brazil Outline Backdrop -->
+              <path d="M 120 70 Q 240 40 370 70 Q 520 110 560 170 Q 570 230 500 290 Q 420 370 340 420 Q 280 440 260 410 Q 240 360 210 300 Q 150 250 100 210 Q 60 160 80 110 Z" 
+                    fill="#111827" stroke="#1f2937" stroke-width="1.5"/>
+
+              <!-- State Nodes will be rendered dynamically by JavaScript -->
+              <g id="stateNodesGroup"></g>
+            </svg>
+
+            <!-- State Hover Tooltip -->
+            <div id="mapTooltip" class="absolute hidden pointer-events-none bg-gray-900/95 border border-amber-500/40 p-2.5 rounded-lg shadow-2xl text-xs z-50">
+              <strong id="ttStateName" class="text-amber-400 text-sm block"></strong>
+              <div class="mt-1 space-y-0.5 text-gray-300">
+                <div>GMV: <b id="ttGMV" class="text-white"></b></div>
+                <div>Orders: <b id="ttOrders" class="text-white"></b></div>
+                <div>Delay Rate: <b id="ttDelay" class="text-rose-400"></b></div>
+                <div>Avg Transit: <b id="ttTransit" class="text-yellow-400"></b></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="mt-3 flex flex-wrap items-center justify-between text-[11px] text-gray-400 pt-2 border-t border-gray-800">
+          <div class="flex items-center space-x-3">
+            <span class="flex items-center"><span class="w-2.5 h-2.5 rounded-full bg-emerald-500 mr-1.5"></span>Low Delay (&lt;7%)</span>
+            <span class="flex items-center"><span class="w-2.5 h-2.5 rounded-full bg-amber-500 mr-1.5"></span>Moderate (7-12%)</span>
+            <span class="flex items-center"><span class="w-2.5 h-2.5 rounded-full bg-rose-500 mr-1.5"></span>Severe (&gt;12%)</span>
+          </div>
+          <span class="text-gray-500 italic">Bubble size = GMV Volume</span>
+        </div>
+      </div>
+
+      <!-- RFM Pareto Breakdown (5 cols) -->
+      <div class="lg:col-span-5 custom-card p-5 flex flex-col justify-between">
+        <div>
+          <div class="flex items-center justify-between mb-3">
+            <h2 class="text-base font-bold text-white flex items-center">
+              <i class="fa-solid fa-crown text-amber-400 mr-2"></i> RFM Segment Revenue Share
+            </h2>
+            <span class="text-xs bg-amber-500/10 text-amber-400 px-2 py-0.5 rounded font-semibold">Pareto 80/20</span>
+          </div>
+          <p class="text-xs text-gray-400 mb-4">Relative GMV contribution across customer behavioral segments</p>
+
+          <div id="rfmBarsContainer" class="space-y-3">
+            <!-- Dynamically populated -->
+          </div>
+        </div>
+
+        <div class="mt-4 p-3 rounded-lg bg-gray-900/90 border border-gray-800 text-xs text-gray-300">
+          <strong class="text-amber-400">Strategic Takeaway:</strong> 
+          Top Tier Champions represent <b class="text-white">12.5%</b> of customers but directly generate 
+          <b class="text-amber-400">38.1%</b> of revenue (R$ 17.9M). Protecting this group from delivery delays is the highest-ROI retention initiative.
+        </div>
+      </div>
+    </div>
+
+    <!-- Bottom Section: Churn Sensitivity & CSAT Drop -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+      <!-- Churn Rate Surge by Tier (6 cols) -->
+      <div class="lg:col-span-6 custom-card p-5">
+        <div class="flex items-center justify-between mb-3">
+          <div>
+            <h2 class="text-base font-bold text-white flex items-center">
+              <i class="fa-solid fa-triangle-exclamation text-rose-400 mr-2"></i> Churn Rate Surge: On-Time vs Delayed
+            </h2>
+            <p class="text-xs text-gray-400">Comparison of customer dropout rate by fulfillment experience</p>
+          </div>
+          <span class="text-xs px-2.5 py-1 rounded bg-rose-500/10 text-rose-300 font-bold border border-rose-500/20">
+            Asymmetric Churn
+          </span>
+        </div>
+
+        <div class="space-y-4 pt-2">
+          <!-- Top Tier -->
+          <div class="bg-gray-950/50 p-3 rounded-lg border border-gray-800">
+            <div class="flex justify-between text-xs mb-1">
+              <span class="font-bold text-amber-400">Top Tier (VIP / High-Spend)</span>
+              <span class="text-rose-400 font-bold">2.38x Multiplier Surge</span>
+            </div>
+            <div class="space-y-1.5">
+              <div class="flex items-center text-[11px] text-gray-300">
+                <span class="w-20">On-Time:</span>
+                <div class="flex-1 bg-gray-800 h-3 rounded-full overflow-hidden mr-2">
+                  <div class="bg-emerald-500 h-full bar-anim rounded-full" style="width: 12.4%;"></div>
+                </div>
+                <span class="font-bold text-emerald-400 w-12 text-right">12.4%</span>
+              </div>
+              <div class="flex items-center text-[11px] text-gray-300">
+                <span class="w-20">Delayed:</span>
+                <div class="flex-1 bg-gray-800 h-3 rounded-full overflow-hidden mr-2">
+                  <div class="bg-rose-500 h-full bar-anim rounded-full" style="width: 28.1%;"></div>
+                </div>
+                <span class="font-bold text-rose-400 w-12 text-right">28.1%</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Mid Tier -->
+          <div class="bg-gray-950/50 p-3 rounded-lg border border-gray-800">
+            <div class="flex justify-between text-xs mb-1">
+              <span class="font-bold text-blue-400">Mid Tier (Core / Repeat Buyers)</span>
+              <span class="text-gray-400">1.06x Multiplier</span>
+            </div>
+            <div class="space-y-1.5">
+              <div class="flex items-center text-[11px] text-gray-300">
+                <span class="w-20">On-Time:</span>
+                <div class="flex-1 bg-gray-800 h-3 rounded-full overflow-hidden mr-2">
+                  <div class="bg-emerald-500 h-full bar-anim rounded-full" style="width: 84.8%;"></div>
+                </div>
+                <span class="font-bold text-emerald-400 w-12 text-right">84.8%</span>
+              </div>
+              <div class="flex items-center text-[11px] text-gray-300">
+                <span class="w-20">Delayed:</span>
+                <div class="flex-1 bg-gray-800 h-3 rounded-full overflow-hidden mr-2">
+                  <div class="bg-rose-500 h-full bar-anim rounded-full" style="width: 90.2%;"></div>
+                </div>
+                <span class="font-bold text-rose-400 w-12 text-right">90.2%</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Low Tier -->
+          <div class="bg-gray-950/50 p-3 rounded-lg border border-gray-800">
+            <div class="flex justify-between text-xs mb-1">
+              <span class="font-bold text-gray-400">Low Tier (Standard / Budget)</span>
+              <span class="text-gray-400">1.00x Multiplier (Flat)</span>
+            </div>
+            <div class="space-y-1.5">
+              <div class="flex items-center text-[11px] text-gray-300">
+                <span class="w-20">On-Time:</span>
+                <div class="flex-1 bg-gray-800 h-3 rounded-full overflow-hidden mr-2">
+                  <div class="bg-emerald-500 h-full bar-anim rounded-full" style="width: 100%;"></div>
+                </div>
+                <span class="font-bold text-emerald-400 w-12 text-right">100.0%</span>
+              </div>
+              <div class="flex items-center text-[11px] text-gray-300">
+                <span class="w-20">Delayed:</span>
+                <div class="flex-1 bg-gray-800 h-3 rounded-full overflow-hidden mr-2">
+                  <div class="bg-rose-500 h-full bar-anim rounded-full" style="width: 100%;"></div>
+                </div>
+                <span class="font-bold text-rose-400 w-12 text-right">100.0%</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- CSAT Drop & Interactive ROI Simulator (6 cols) -->
+      <div class="lg:col-span-6 custom-card p-5 flex flex-col justify-between">
+        <div>
+          <div class="flex items-center justify-between mb-3">
+            <div>
+              <h2 class="text-base font-bold text-white flex items-center">
+                <i class="fa-solid fa-star-half-stroke text-yellow-400 mr-2"></i> Review Rating (CSAT) vs Delivery SLA
+              </h2>
+              <p class="text-xs text-gray-400">Customer rating cliff when packages breach estimated delivery date</p>
+            </div>
+            <span class="text-xs bg-yellow-500/10 text-yellow-400 px-2 py-0.5 rounded font-semibold">1 to 5 Stars</span>
+          </div>
+
+          <!-- CSAT Step Chart -->
+          <div class="grid grid-cols-5 gap-1.5 text-center my-3">
+            <div class="bg-gray-950 p-2 rounded border border-gray-800">
+              <span class="text-[10px] text-gray-400 block truncate">Early (&gt;5d)</span>
+              <div class="text-sm font-black text-emerald-400 mt-1">4.79 ★</div>
+            </div>
+            <div class="bg-gray-950 p-2 rounded border border-gray-800">
+              <span class="text-[10px] text-gray-400 block truncate">On-Time</span>
+              <div class="text-sm font-black text-emerald-400 mt-1">4.77 ★</div>
+            </div>
+            <div class="bg-rose-950/30 p-2 rounded border border-rose-500/30">
+              <span class="text-[10px] text-rose-300 block truncate">1-3d Late</span>
+              <div class="text-sm font-black text-rose-400 mt-1">1.65 ★</div>
+            </div>
+            <div class="bg-rose-950/30 p-2 rounded border border-rose-500/30">
+              <span class="text-[10px] text-rose-300 block truncate">4-7d Late</span>
+              <div class="text-sm font-black text-rose-400 mt-1">1.67 ★</div>
+            </div>
+            <div class="bg-rose-950/40 p-2 rounded border border-rose-500/40">
+              <span class="text-[10px] text-rose-300 block truncate">&gt;7d Late</span>
+              <div class="text-sm font-black text-rose-400 mt-1">1.70 ★</div>
+            </div>
+          </div>
+
+          <!-- Interactive Financial ROI Simulator -->
+          <div class="mt-4 pt-4 border-t border-gray-800">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-xs font-bold text-white uppercase tracking-wider">VIP Delay Reduction Simulator</span>
+              <span id="simSavingsVal" class="text-lg font-black text-emerald-400">R$ 1,842,500 Saved</span>
+            </div>
+            <div class="space-y-2">
+              <div class="flex justify-between text-xs text-gray-300">
+                <span>Target Delay Rate for VIP Orders:</span>
+                <span id="simTargetVal" class="font-bold text-amber-400">2.0% (Current: 6.92%)</span>
+              </div>
+              <input id="simRange" type="range" min="0.5" max="10.0" step="0.5" value="2.0" class="w-full h-2 bg-gray-700 rounded-lg cursor-pointer">
+              <p class="text-[11px] text-gray-400 leading-normal">
+                Adjust the slider to simulate the enterprise revenue protected by introducing VIP courier SLAs in high-friction routes.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+  <script>
+    const STATES_DATA = [
+      { code: "SP", name: "Sao Paulo", region: "Southeast", x: 380, y: 340, gmv: 20003180.31, orders: 49391, delay: 4.46, transit: 7.4 },
+      { code: "RJ", name: "Rio de Janeiro", region: "Southeast", x: 440, y: 330, gmv: 6156736.27, orders: 15159, delay: 7.96, transit: 11.0 },
+      { code: "MG", name: "Minas Gerais", region: "Southeast", x: 410, y: 290, gmv: 5398549.30, orders: 13647, delay: 6.85, transit: 11.8 },
+      { code: "RS", name: "Rio Grande do Sul", region: "South", x: 320, y: 415, gmv: 2581562.32, orders: 6422, delay: 5.93, transit: 13.5 },
+      { code: "PR", name: "Parana", region: "South", x: 340, y: 360, gmv: 2310722.16, orders: 5820, delay: 5.34, transit: 11.4 },
+      { code: "SC", name: "Santa Catarina", region: "South", x: 350, y: 385, gmv: 1661108.09, orders: 4299, delay: 5.82, transit: 12.6 },
+      { code: "BA", name: "Bahia", region: "Northeast", x: 470, y: 220, gmv: 1543382.90, orders: 3880, delay: 13.30, transit: 19.8 },
+      { code: "GO", name: "Goias", region: "Central-West", x: 340, y: 260, gmv: 986708.05, orders: 2398, delay: 7.92, transit: 14.9 },
+      { code: "DF", name: "Distrito Federal", region: "Central-West", x: 360, y: 250, gmv: 973655.68, orders: 2478, delay: 7.75, transit: 12.9 },
+      { code: "ES", name: "Espirito Santo", region: "Southeast", x: 475, y: 305, gmv: 853179.30, orders: 2300, delay: 7.61, transit: 14.1 },
+      { code: "PE", name: "Pernambuco", region: "Northeast", x: 535, y: 165, gmv: 733084.59, orders: 1899, delay: 15.17, transit: 22.2 },
+      { code: "CE", name: "Ceara", region: "Northeast", x: 485, y: 115, gmv: 592555.82, orders: 1483, delay: 16.25, transit: 23.3 },
+      { code: "MT", name: "Mato Grosso", region: "Central-West", x: 250, y: 240, gmv: 524443.86, orders: 1208, delay: 11.67, transit: 19.7 },
+      { code: "MS", name: "Mato Grosso do Sul", region: "Central-West", x: 275, y: 310, gmv: 427574.77, orders: 979, delay: 9.30, transit: 17.0 },
+      { code: "PA", name: "Para", region: "North", x: 340, y: 110, gmv: 398821.83, orders: 992, delay: 19.76, transit: 26.9 },
+      { code: "MA", name: "Maranhao", region: "Northeast", x: 410, y: 110, gmv: 315062.25, orders: 811, delay: 19.24, transit: 25.9 },
+      { code: "RN", name: "Rio Grande do Norte", region: "Northeast", x: 535, y: 135, gmv: 235471.52, orders: 582, delay: 15.46, transit: 23.2 },
+      { code: "PI", name: "Piaui", region: "Northeast", x: 440, y: 145, gmv: 219192.18, orders: 520, delay: 18.27, transit: 25.4 },
+      { code: "PB", name: "Paraiba", region: "Northeast", x: 540, y: 150, gmv: 213601.93, orders: 548, delay: 12.23, transit: 23.1 },
+      { code: "SE", name: "Sergipe", region: "Northeast", x: 515, y: 200, gmv: 180821.14, orders: 470, delay: 11.49, transit: 20.7 },
+      { code: "AL", name: "Alagoas", region: "Northeast", x: 525, y: 185, gmv: 161616.35, orders: 441, delay: 15.19, transit: 22.2 },
+      { code: "TO", name: "Tocantins", region: "North", x: 360, y: 195, gmv: 126179.55, orders: 334, delay: 16.77, transit: 24.0 },
+      { code: "RO", name: "Rondonia", region: "North", x: 170, y: 200, gmv: 115256.71, orders: 344, delay: 18.90, transit: 25.3 },
+      { code: "AM", name: "Amazonas", region: "North", x: 200, y: 120, gmv: 91015.46, orders: 214, delay: 24.77, transit: 30.6 },
+      { code: "AC", name: "Acre", region: "North", x: 100, y: 205, gmv: 53873.47, orders: 126, delay: 18.25, transit: 28.5 },
+      { code: "RR", name: "Roraima", region: "North", x: 210, y: 50, gmv: 36640.06, orders: 101, delay: 29.70, transit: 34.3 },
+      { code: "AP", name: "Amapa", region: "North", x: 320, y: 55, gmv: 33187.16, orders: 121, delay: 19.01, transit: 30.1 }
+    ];
+
+    const RFM_SEGMENTS = [
+      { name: "Champions (Top Tier)", share: 38.1, spend: "R$ 1,522", color: "#f59e0b" },
+      { name: "At Risk / Needs Attention", share: 26.6, spend: "R$ 493", color: "#ef4444" },
+      { name: "Loyal Customers", share: 16.7, spend: "R$ 618", color: "#3b82f6" },
+      { name: "Promising / Developing", share: 7.7, spend: "R$ 191", color: "#10b981" },
+      { name: "Potential Loyalists", share: 6.8, spend: "R$ 307", color: "#8b5cf6" },
+      { name: "Hibernating & Lost", share: 4.1, spend: "R$ 128", color: "#64748b" }
+    ];
+
+    let selectedState = null;
+
+    function renderMap() {
+      const g = document.getElementById("stateNodesGroup");
+      g.innerHTML = "";
+
+      const regionFilter = document.getElementById("regionFilter").value;
+
+      STATES_DATA.forEach(st => {
+        const isDimmed = (regionFilter !== "ALL" && st.region !== regionFilter);
+        const radius = Math.max(6, Math.sqrt(st.orders) * 0.13);
+        const fill = st.delay > 15 ? "#ef4444" : st.delay > 7 ? "#f59e0b" : "#10b981";
+
+        const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+        circle.setAttribute("cx", st.x);
+        circle.setAttribute("cy", st.y);
+        circle.setAttribute("r", radius);
+        circle.setAttribute("fill", fill);
+        circle.setAttribute("fill-opacity", isDimmed ? "0.15" : "0.75");
+        circle.setAttribute("stroke", isDimmed ? "none" : "#ffffff");
+        circle.setAttribute("stroke-width", "1.2");
+        circle.setAttribute("class", `state-node ${selectedState === st.code ? 'active-state' : ''}`);
+
+        const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+        text.setAttribute("x", st.x);
+        text.setAttribute("y", st.y + 3);
+        text.setAttribute("font-size", "8.5px");
+        text.setAttribute("font-weight", "bold");
+        text.setAttribute("fill", isDimmed ? "rgba(255,255,255,0.2)" : "#ffffff");
+        text.setAttribute("text-anchor", "middle");
+        text.setAttribute("pointer-events", "none");
+        text.textContent = st.code;
+
+        circle.addEventListener("mouseenter", (e) => showTooltip(e, st));
+        circle.addEventListener("mousemove", (e) => moveTooltip(e));
+        circle.addEventListener("mouseleave", hideTooltip);
+
+        circle.addEventListener("click", () => {
+          if (selectedState === st.code) {
+            selectedState = null;
+            document.getElementById("selectedStateBadge").textContent = "National View";
+          } else {
+            selectedState = st.code;
+            document.getElementById("selectedStateBadge").textContent = `${st.name} (${st.code})`;
+          }
+          updateDashboard();
+        });
+
+        g.appendChild(circle);
+        g.appendChild(text);
+      });
+    }
+
+    const tooltip = document.getElementById("mapTooltip");
+    function showTooltip(e, st) {
+      document.getElementById("ttStateName").textContent = `${st.name} (${st.code})`;
+      document.getElementById("ttGMV").textContent = `R$ ${(st.gmv / 1e6).toFixed(2)}M`;
+      document.getElementById("ttOrders").textContent = st.orders.toLocaleString();
+      document.getElementById("ttDelay").textContent = `${st.delay}%`;
+      document.getElementById("ttTransit").textContent = `${st.transit} days`;
+      tooltip.classList.remove("hidden");
+      moveTooltip(e);
+    }
+    function moveTooltip(e) {
+      const rect = document.getElementById("brazilSvg").getBoundingClientRect();
+      const x = e.clientX - rect.left + 15;
+      const y = e.clientY - rect.top - 10;
+      tooltip.style.left = `${x}px`;
+      tooltip.style.top = `${y}px`;
+    }
+    function hideTooltip() {
+      tooltip.classList.add("hidden");
+    }
+
+    function renderRFMBars() {
+      const container = document.getElementById("rfmBarsContainer");
+      container.innerHTML = "";
+
+      RFM_SEGMENTS.forEach(seg => {
+        const item = document.createElement("div");
+        item.className = "space-y-1";
+        item.innerHTML = `
+          <div class="flex justify-between text-xs">
+            <span class="font-medium text-gray-300 flex items-center">
+              <span class="w-2 h-2 rounded-full mr-2" style="background-color: ${seg.color}"></span>
+              ${seg.name}
+            </span>
+            <span class="text-gray-400"><b class="text-white">${seg.share}%</b> GMV (${seg.spend})</span>
+          </div>
+          <div class="w-full bg-gray-800 h-2 rounded-full overflow-hidden">
+            <div class="h-full rounded-full bar-anim" style="width: ${seg.share * 2.2}%; background-color: ${seg.color};"></div>
+          </div>
+        `;
+        container.appendChild(item);
+      });
+    }
+
+    function updateDashboard() {
+      const reg = document.getElementById("regionFilter").value;
+      const tier = document.getElementById("tierFilter").value;
+
+      let filtered = STATES_DATA;
+      if (selectedState) {
+        filtered = filtered.filter(s => s.code === selectedState);
+      } else if (reg !== "ALL") {
+        filtered = filtered.filter(s => s.region === reg);
+      }
+
+      const totGMV = filtered.reduce((acc, s) => acc + s.gmv, 0);
+      const totOrders = filtered.reduce((acc, s) => acc + s.orders, 0);
+
+      let multText = "2.38x";
+      if (tier === "Top Tier (VIP)") multText = "2.38x – 3.1x";
+      else if (tier === "Mid Tier (Core)") multText = "1.06x";
+      else if (tier === "Low Tier (Standard)") multText = "1.00x";
+
+      document.getElementById("kpiGMV").textContent = `R$ ${(totGMV / 1e6).toFixed(1)}M`;
+      document.getElementById("kpiOrders").textContent = totOrders.toLocaleString();
+      document.getElementById("kpiStatesCount").textContent = filtered.length;
+      document.getElementById("kpiMultiplier").textContent = multText;
+
+      const gmvPct = ((totGMV / 46927183) * 100).toFixed(1);
+      document.getElementById("kpiGMVSub").innerHTML = `<span class="text-emerald-400 font-semibold">${gmvPct}%</span> <span>of national GMV</span>`;
+
+      renderMap();
+    }
+
+    const slider = document.getElementById("simRange");
+    slider.addEventListener("input", function() {
+      const target = parseFloat(this.value);
+      document.getElementById("simTargetVal").textContent = `${target.toFixed(1)}% (Current: 6.92%)`;
+
+      const reduction = Math.max(0, 6.92 - target);
+      const saved = Math.round(reduction * 374500);
+      document.getElementById("simSavingsVal").textContent = `R$ ${saved.toLocaleString()} Saved`;
+    });
+
+    document.getElementById("regionFilter").addEventListener("change", () => {
+      selectedState = null;
+      document.getElementById("selectedStateBadge").textContent = "Regional View";
+      updateDashboard();
+    });
+    document.getElementById("tierFilter").addEventListener("change", updateDashboard);
+    document.getElementById("delayFilter").addEventListener("change", updateDashboard);
+
+    document.getElementById("resetFiltersBtn").addEventListener("click", () => {
+      selectedState = null;
+      document.getElementById("regionFilter").value = "ALL";
+      document.getElementById("tierFilter").value = "ALL";
+      document.getElementById("delayFilter").value = "ALL";
+      document.getElementById("selectedStateBadge").textContent = "National View";
+      updateDashboard();
+    });
+
+    renderMap();
+    renderRFMBars();
+    updateDashboard();
+  </script>
+</body>
+</html>

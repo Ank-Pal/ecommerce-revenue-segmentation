@@ -1,0 +1,16 @@
+customer_tier,delay_interval,total_orders,avg_csat,churn_rate_pct
+Low Tier (Standard),1. Early (>5d),33521,4.776587810626174,100.0
+Mid Tier (Core),1. Early (>5d),38571,4.787949495735138,73.85859842887143
+Top Tier (VIP),1. Early (>5d),32327,4.788597766572834,12.311689918643857
+Low Tier (Standard),2. On-Time (0-4d early),1429,4.766969909027292,100.0
+Mid Tier (Core),2. On-Time (0-4d early),1708,4.782786885245901,73.65339578454333
+Top Tier (VIP),2. On-Time (0-4d early),1314,4.764079147640792,13.698630136986301
+Low Tier (Standard),3. Minor Delay (1-3d late),636,1.729559748427673,100.0
+Mid Tier (Core),3. Minor Delay (1-3d late),735,1.653061224489796,76.73469387755102
+Top Tier (VIP),3. Minor Delay (1-3d late),609,1.4236453201970443,28.735632183908045
+Low Tier (Standard),4. Moderate Delay (4-7d late),792,1.6919191919191918,100.0
+Mid Tier (Core),4. Moderate Delay (4-7d late),928,1.6724137931034482,77.15517241379311
+Top Tier (VIP),4. Moderate Delay (4-7d late),838,1.4618138424821003,23.86634844868735
+Low Tier (Standard),5. Severe Delay (>7d late),1302,1.7112135176651306,100.0
+Mid Tier (Core),5. Severe Delay (>7d late),1315,1.6965779467680608,81.90114068441065
+Top Tier (VIP),5. Severe Delay (>7d late),942,1.4458598726114649,31.422505307855626

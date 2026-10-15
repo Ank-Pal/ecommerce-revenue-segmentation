@@ -1,0 +1,25 @@
+{
+  "dataset_name": "Brazilian E-Commerce Public Dataset (Olist)",
+  "period": "September 2016 - October 2018",
+  "total_orders": 116967,
+  "unique_customers": 94200,
+  "total_gmv_brl": 46927183.03,
+  "avg_order_value_brl": 401.2,
+  "overall_delay_rate_pct": 6.92,
+  "overall_avg_transit_days": 11.4,
+  "top_tier_revenue_share_pct": 72.38,
+  "top_tier_on_time_churn_pct": 12.37,
+  "top_tier_delayed_churn_pct": 28.09,
+  "top_tier_churn_multiplier": 2.27,
+  "low_tier_churn_multiplier": 1.0,
+  "csat_drop_vip": {
+    "on_time": 4.79,
+    "delayed": 1.45
+  },
+  "regional_disparity": {
+    "southeast_revenue_share_pct": 69.07,
+    "southeast_delay_rate_pct": 6.72,
+    "northeast_delay_rate_pct": 15.18,
+    "northeast_avg_transit_days": 22.9
+  }
+}
